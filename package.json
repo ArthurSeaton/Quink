@@ -2,20 +2,15 @@
   "name": "Quink",
   "version": "0.1.0",
   "description": "An extensible, mobile-friendly in-page WYSIWYG HTML editor",
-  "homepage": "https://github.com/IMD-Business-School/Quink",
+  "homepage": "https://github.com/ArthurSeaton/Quink",
   "repository": {
     "type": "git",
-    "url": "git://github.com/IMD-Business-School/Quink.git"
+    "url": "git://github.com/ArthurSeaton/Quink.git"
   },
-  "licenses": [
-    {
-      "type": "MIT",
-      "url": "https://github.com/IMD-Business-School/Quink/blob/master/license.txt"
-    }
-  ],
-  "bugs": {
-    "url": "https://github.com/IMD-Business-School/Quink/issues"
-  },
+  "licenses": [{
+    "type": "MIT",
+    "url": "https://github.com/ArthurSeaton/Quink/blob/master/license.txt"
+  }],
   "devDependencies": {
     "grunt": "~0.4.2",
     "grunt-cli": "^0.1.13",
