@@ -9,27 +9,35 @@ require.config({
     // urlArgs: "bust=" + (new Date()).getTime(),
 
     paths: {
-        jquery: 'lib/jquery-1.10.2',
-        rangy: 'lib/rangy-core',
-        textrange: 'lib/rangy-textrange',
-        Underscore: 'lib/underscore'
+        jquery: 'lib/jquery-2.1.1',
+        'rangy-core': 'lib/rangy-core',
+        'rangy-textrange': 'lib/rangy-textrange',
+        'rangy-classapplier': 'lib/rangy-classapplier',
+        Underscore: 'lib/underscore',
+        text: 'lib/text',
+        resources: '../resources'
     },
 
     shim: {
         'Underscore': {
             exports: '_'
-        },
-        'rangy': {
-            exports: 'rangy'
-        },
-        'textrange': [ 'rangy' ]
+        }
     }
 });
 
-require([
+define([
     'App'
 ], function (App) {
     'use strict';
 
     App.init();
+    return QUINK;
 });
+
+// require([
+//     'App'
+// ], function (App) {
+//     'use strict';
+//
+//     App.init();
+// });

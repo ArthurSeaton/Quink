@@ -7,7 +7,7 @@
 /*global QUINK */
 define([
     'jquery',
-    'rangy',
+    'rangy-core',
     'command/Command',
     'ext/PluginMgr',
     'hithandler/HitHandler',
@@ -18,29 +18,34 @@ define([
     'ui/Toolbar',
     'util/Env',
     'util/FocusTracker',
-    'util/PubSub'
-], function ($, rangy, Command, PluginMgr, HitHandler, KeyHandlerMgr, Persist, Caret, CommandStateBar, Toolbar, Env, FocusTracker, PubSub) {
+    'util/PubSub',
+    'util/StylesheetMgr'
+], function ($, rangy, Command, PluginMgr, HitHandler, KeyHandlerMgr, Persist, Caret, CommandStateBar, Toolbar, Env, FocusTracker, PubSub, StylesheetMgr) {
     'use strict';
 
     function init() {
         var selector = '[contenteditable=true]',
-            tbDownloads, csbDownloads, pmDownloads, khmDownloads;
+            stylesheetMgr,
+            tbDownloads, pmDownloads, smDownloads;
         Persist.initFromAutoSave();
         rangy.init();
         Env.init();
-        khmDownloads = KeyHandlerMgr.init(selector);
+        KeyHandlerMgr.init(selector);
         FocusTracker.init(selector);
         Command.init();
-        csbDownloads = CommandStateBar.create();
+        CommandStateBar.create();
         HitHandler.init(selector);
-        tbDownloads = Toolbar.init();
+        stylesheetMgr = StylesheetMgr.getInstance();
+        smDownloads = stylesheetMgr.init();
+        tbDownloads = Toolbar.init(stylesheetMgr);
         pmDownloads = PluginMgr.init();
         Caret.init();
         Persist.init();
-        $.when(tbDownloads, csbDownloads, pmDownloads, khmDownloads).done(function () {
+        $.when(tbDownloads, pmDownloads, smDownloads).done(function () {
             if (typeof QUINK.ready === 'function') {
                 QUINK.ready(PubSub);
             }
+            QUINK.isReady = true;
         }).fail(function () {
             console.log('downloads failed...');
         });

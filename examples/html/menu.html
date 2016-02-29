@@ -1,0 +1,96 @@
+<!doctype html>
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, minimum-scale=1.0">
+        <title>Quink Example - toolbar menu</title>
+        <script type="text/javascript">
+            var singleState = [],
+                multiState = [];
+
+            QUINK = {
+                params: {
+                    toolbar: 'on'
+                },
+                ready: function () {
+                    QUINK.configureToolbar({
+                        groups: [{
+                            id: 'buttons',
+                            label: 'Buttons',
+                            active: true,
+                            hidden: false,
+                            items: [{
+                                "id": "singlemenu",
+                                "hidden": false,
+                                "elId": "singlemenu",
+                                "cssClass": "qk_button_bg_applystyle",
+                                "command": "showMenu",
+                                "commandArgs": "createSingleDefs, getSingleState, onSingleSelect"
+                            }, {
+                                "id": "multimenu",
+                                "hidden": false,
+                                "elId": "multimenu",
+                                "cssClass": "qk_button_bg_applystyle",
+                                "command": "showMenu",
+                                "commandArgs": "createMultiDefs, getMultiState, onMultiSelect, true"
+                            }]
+                        }],
+                        defaults: {
+                            hidden: true
+                        }
+                    });
+
+                    QUINK.createSingleDefs = function () {
+                        return [{
+                            label: 'option1',
+                            value: '1'
+                        }, {
+                            label: 'option 2',
+                            value: '2'
+                        }, {
+                            label: 'option 3',
+                            value: '3'
+                        }];
+                    };
+
+                    QUINK.getSingleState = function () {
+                        return singleState;
+                    };
+
+                    QUINK.onSingleSelect = function (newValue, oldValue, state) {
+                        singleState = state;
+                    };
+
+                    QUINK.createMultiDefs = function () {
+                        return [{
+                            label: 'option A',
+                            value: 'A'
+                        }, {
+                            label: 'option B',
+                            value: 'B'
+                        }, {
+                            label: 'option C',
+                            value: 'C'
+                        }, {
+                            label: 'option D',
+                            value: 'D'
+                        }];
+                    };
+
+                    QUINK.getMultiState = function () {
+                        return multiState;
+                    };
+
+                    QUINK.onMultiSelect = function (newValue, oldValue, state) {
+                        multiState = state;
+                    };
+                }
+            }
+        </script>
+        <script type="text/javascript" src="../../quink.js"></script>
+    </head>
+    <body>
+        <div contenteditable="true">
+            The is example shows a toolbar menu configured via client code. Tap the button and a menu will be displayed. The menu does nothing other than maintain its own state.
+        </div>
+    </body>
+</html>

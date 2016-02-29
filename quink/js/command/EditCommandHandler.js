@@ -13,13 +13,12 @@ define([
     };
 
     EditCommandHandler.prototype.execCmd = function (cmd, args) {
-        var cmdResult;
+        var result = document.execCommand(cmd, false, args);
         console.log('exec cmd: ' + cmd + ' [' + args + ']');
-        cmdResult = document.execCommand(cmd, false, args);
         PubSub.publish('command.executed', {
             cmd: cmd,
             args: args,
-            result: cmdResult
+            result: result
         });
     };
 

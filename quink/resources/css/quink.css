@@ -23,6 +23,8 @@
     -webkit-touch-callout: none;
     -webkit-user-select: none;
     -moz-user-select: none;
+    font-family: 'Helvetica Neue', 'Lucida Grande';
+    font-size: 11px;
 }
 .qk_toolbar {
     padding-top: 1px;
@@ -121,30 +123,23 @@
     margin-right: -17px;
     line-height: 35px; /* must match height value - used for text button labels */
     background-size: contain;
-    background-position-x: 50%;
-    background-position-y: 50%;
-    background-repeat-x: no-repeat;
-    background-repeat-y: no-repeat;
+    background-position: 50% 50%;
+    background-repeat: no-repeat;
 }
 .qk_button_bg_bold {
     background-image: url(../images/inline-bold.png);
-/*    background-image: url(../images/inline-bold.svg);*/
 }
 .qk_button_bg_italic {
     background-image: url(../images/inline-italic.png);
-/*    background-image: url(../images/inline-italic.svg);*/
 }
 .qk_button_bg_underline {
     background-image: url(../images/inline-underline.png);
-/*    background-image: url(../images/inline-underline.svg);*/
 }
 .qk_button_bg_strikethrough {
     background-image: url(../images/inline-strike-through.png);
-/*    background-image: url(../images/inline-strike-through.svg);*/
 }
 .qk_button_bg_superscript {
     background-image: url(../images/inline-super-script.png);
-/*    background-image: url(../images/inline-super-script.svg);*/
 }
 .qk_button_bg_subscript {
     background-image: url(../images/inline-sub-script.png);
@@ -266,6 +261,21 @@
 .qk_button_bg_save {
     background-image: url(../images/extra-save.png);
 }
+.qk_button_bg_style_font {
+    background-image: url(../images/future-possibilities-font.png);
+}
+.qk_button_bg_style_size {
+    background-image: url(../images/future-possibilities-highlight.png);
+}
+.qk_button_bg_style_colour {
+    background-image: url(../images/future-possibilities-foreground-colour.png);
+}
+.qk_button_bg_style_effects {
+    background-image: url(../images/future-possibilities-background-colour.png);
+}
+.qk_button_bg_hn {
+    background-image: url(../images/format-h1.png);
+}
 .qk_button_active {
     background-color: #DADADA;
 }
@@ -352,7 +362,7 @@ button {
     right: 0px;
 }
 .qk_popup_menu {
-    position: absolute;
+    position: fixed;
     z-index: 1000;
     padding: 0px;
     font-family: 'Lucida Grande';
@@ -360,7 +370,8 @@ button {
     border-width: 1px;
     border-style: solid;
 }
-.qk_popup_menu_item {
+.qk_popup_menu_item_container {
+    height: 100%;
     padding: 10px;
 }
 .qk_popup_menu > .qk_popup_menu_item {
@@ -369,6 +380,10 @@ button {
 }
 .qk_popup_menu_item:last-child {
     border-bottom-width: 0px;
+}
+.qk_popup_menu_item_state {
+    float: right;
+    margin-left: 20px;
 }
 .qk_info_container {
     position: fixed;
@@ -424,7 +439,7 @@ button {
     overflow: hidden;
 }
 .qk_mask {
-    position: fixed;
+    position: absolute;
     left: 0px;
     top: 0px;
     right: 0px;

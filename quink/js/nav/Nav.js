@@ -7,8 +7,8 @@
 define([
     'Underscore',
     'jquery',
-    'rangy',
-    'textrange',
+    'rangy-core',
+    'rangy-textrange',
     'locrange/LocRange',
     'util/PubSub',
     'nav/Position',
@@ -319,41 +319,51 @@ define([
             clone = rge.cloneRange();
             rge = new LocRange(rge).locate();
         }
-        try {
-            this.makeRangeVisible(rge);
-        } finally {
-            if (clone) {
-                sel.setSingleRange(clone);
+        if (rge) {
+            try {
+                this.makeRangeVisible(rge);
+            } finally {
+                if (clone) {
+                    sel.setSingleRange(clone);
+                }
             }
         }
     };
 
     /**
      * Makes sure that the given range is visible. range is a LocRange object.
-     * On the iPad the document itself is scrolled because of the virtual keyboard.
+     * Coordinates are client based. The lowest y value that's visible will be either the top of the
+     * viewport or the top of the editable, taking any document scrolling into account. The greatest
+     * visible y value will be either the bottom of the viewport or the bottom of the editable again taking
+     * any document scrolling into account.
+     * There's a further wrinkle and that's to do with the virtual keyboard on touch devices. On some
+     * devices this will effectively move the bottom of the viewport up.
      */
     Nav.prototype.makeRangeVisible = function (range) {
-        var cont, body, visBounds,
-            rangeTop, contScrollTop, delta;
-        if (range) {
-            cont = $(this.getState().editable);
-            body = $('body');
-            visBounds = DomUtil.getVisibleBounds(cont, true);
-            rangeTop = range.getTop();
-            contScrollTop = cont.scrollTop();
-            if (rangeTop < visBounds.top) {
-                delta = Math.ceil(visBounds.top - rangeTop);
-                cont.scrollTop(contScrollTop - delta);
-                if (cont.scrollTop() !== contScrollTop - delta) {
-                    // Container didn't scroll enough, try the body
-                    body.scrollTop(body.scrollTop() - delta);
-                }
-            } else if (range.getBottom() > visBounds.bottom) {
-                delta = Math.ceil(range.getBottom() - visBounds.bottom);
-                cont.scrollTop(contScrollTop + delta);
-                if (cont.scrollTop() !== contScrollTop + delta) {
-                    // Container didn't scroll enough, try the body
-                    body.scrollTop(body.scrollTop() + delta);
+        var el = $(this.getState().editable),
+            doc = $(document),
+            rangeTop = Math.ceil(range.getTop()),
+            rangeBottom = Math.floor(range.getBottom()),
+            rangeHeight = rangeBottom - rangeTop,
+            visBounds = DomUtil.getVisibleClientBounds(el, true),
+            win, delta, bound, scrollTop;
+        bound = Math.floor(visBounds.top + rangeHeight);
+        if (rangeTop <= bound) {
+            delta = bound - rangeTop;
+            scrollTop = el.scrollTop();
+            el.scrollTop(scrollTop - delta);
+            if (el.scrollTop() > scrollTop - delta) {
+                doc.scrollTop(doc.scrollTop() - delta);
+            }
+        } else {
+            win = $(window);
+            bound = Math.ceil(visBounds.bottom - rangeHeight);
+            if (rangeBottom > bound) {
+                delta = rangeBottom - bound;
+                scrollTop = el.scrollTop();
+                el.scrollTop(scrollTop + delta);
+                if (el.scrollTop() < scrollTop + delta) {
+                    doc.scrollTop(doc.scrollTop() + delta);
                 }
             }
         }

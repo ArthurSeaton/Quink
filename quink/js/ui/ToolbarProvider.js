@@ -113,8 +113,9 @@ define([
     /**
      * Updates srcItems to reflect the changes specified in editItems.
      */
-    ToolbarProvider.prototype.mergeItems = function (srcGroups, srcItems, editItems) {
-        editItems.forEach(function (editItem) {
+    ToolbarProvider.prototype.mergeItems = function (srcGroups, srcGroup, editGroup) {
+        var srcItems = srcGroup.items;
+        editGroup.items.forEach(function (editItem) {
             var srcItem = this.findItem(srcGroups, srcItems, editItem.id);
             if (srcItem) {
                 if (editItem.index !== undefined) {
@@ -122,7 +123,8 @@ define([
                 }
                 this.updateObject(srcItem, editItem, true);
             } else {
-                console.log('unable to find item with id: ' + editItem.id);
+                srcGroup.items.push($.extend({}, editItem));
+                this.orderObjects(srcItems, 0, editItem.index);
             }
         }, this);
     };
@@ -153,7 +155,7 @@ define([
                 srcGrp.items = [];
                 src.push(srcGrp);
                 if (editGrp.items) {
-                    this.mergeItems(src, srcGrp.items, editGrp.items);
+                    this.mergeItems(src, srcGrp, editGrp);
                 }
             } else {
                 if (editGrp.index !== undefined) {
@@ -161,7 +163,7 @@ define([
                 }
                 this.updateObject(srcGrp, editGrp, true);
                 if (editGrp.items) {
-                    this.mergeItems(src, srcGrp.items, editGrp.items);
+                    this.mergeItems(src, srcGrp, editGrp);
                 }
             }
         }, this);
@@ -190,9 +192,9 @@ define([
      * in the group or item default objects.
      * No defaults results in the fallback values being used for both groups and items.
      */
-    ToolbarProvider.prototype.createDefaults = function (def) {
+    ToolbarProvider.prototype.createDefaults = function (suppliedDefaults) {
         var result = {},
-            defaults = def.defaults;
+            defaults = suppliedDefaults || {};
         result.group = $.extend(true, {}, this.TOOLBAR_DEFAULTS);
         result.item = $.extend(true, {}, this.TOOLBAR_DEFAULTS);
         if (defaults) {
@@ -218,22 +220,30 @@ define([
         return result;
     };
 
+    ToolbarProvider.prototype.DEFAULT_SETTINGS = {
+        group: {},
+        item: {}
+    };
+
     /**
      * New definition will be appied on top of the current definition after the defaults have been
      * applied. Defaults overwrite properties in the current definition but not in the supplied
      * definition.
      * The returned value is the html for the toolbar.
      */
-    ToolbarProvider.prototype.createToolbar = function (def) {
+    ToolbarProvider.prototype.createToolbar = function (def, suppliedSettings) {
         var workingDef = $.extend(true, {}, this.toolbarDef),
-            defaults = this.createDefaults(def),
+            workingDefaults = this.createDefaults(workingDef.defaults),
+            editDefaults = this.createDefaults(def.defaults),
+            settings = suppliedSettings ? this.createDefaults(suppliedSettings) : this.DEFAULT_SETTINGS,
             editGroups = def.groups || [];
-        this.applyDefaults(workingDef.groups, defaults, true, true);
-        this.applyDefaults(editGroups, defaults, false, true);
+        this.applyDefaults(workingDef.groups, workingDefaults, false, true);
+        this.applyDefaults(workingDef.groups, settings, true, true);
+        this.applyDefaults(editGroups, editDefaults, false, true);
         this.mergeGroups(workingDef.groups, editGroups);
         this.orderToolbarItems(workingDef);
         this.toolbarDef = workingDef;
-        return _.template(this.toolbarTpl, workingDef);
+        return _.template(this.toolbarTpl)(workingDef);
     };
 
     /**
@@ -250,10 +260,15 @@ define([
                     id: grp.id,
                     length: length
                 };
-            }).reduce(function (prevObj, currentObj) {
+            }),
+            id;
+        if (widestTabObj.length) {
+            widestTabObj = widestTabObj.reduce(function (prevObj, currentObj) {
                 return currentObj.length > prevObj.length ? currentObj : prevObj;
             });
-        return widestTabObj.id;
+            id = widestTabObj.id;
+        }
+        return id;
     };
 
     /**

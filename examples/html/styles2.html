@@ -1,0 +1,62 @@
+<!doctype html>
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, minimum-scale=1.0">
+        <title>Quink Example - user supplied styles in a style element</title>
+        <script type="text/javascript">
+            QUINK = {
+                params: {
+                    toolbar: 'on',
+                    styles: '#user-styles'
+                },
+                ready: function () {
+                    QUINK.configureToolbar({
+                        groups: [{
+                            id: 'style',
+                            active: true,
+                            hidden: false,
+                            items: [{
+                                "id": "applyStyleStroke",
+                                "hidden": false,
+                                "cssClass": "qk_button_bg_style_effects",
+                                "command": "showStyleMenu",
+                                "commandArgs": "ruleFilter, styleLabel"
+                            }]
+                        }],
+                        defaults: {
+                            hidden: true
+                        }
+                    });
+
+                    /**
+                     * The style menu will contain every style in the stylesheet.
+                     */
+                    QUINK.ruleFilter = function () {
+                        return true;
+                    };
+
+                    /**
+                     * Remove the leading 'highlight_' from the menu items for the background menu.
+                     */
+                    QUINK.styleLabel = function (style) {
+                        return style.replace(/^highlight_(.*)/i, '$1');
+                    };
+            }
+        }
+        </script>
+        <script type="text/javascript" src="../../quink.js"></script>
+        <style id="user-styles">
+            .highlight_red {
+                background-color: red;
+            }
+            .highlight_green {
+                background-color: green;
+            }
+        </style>
+    </head>
+    <body>
+        <div contenteditable="true">
+            Tap the apply styles button in the style tab of the toolbar. This produces the apply styles menu populated using the style node in the document. This example also shows the use of a function to provide the style menu item labels.
+        </div>
+    </body>
+</html>

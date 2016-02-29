@@ -5,7 +5,8 @@
  */
 
 define([
-], function () {
+    'Underscore'
+], function (_) {
     'use strict';
 
     var QUINK_ROOT = 'quink',
@@ -56,7 +57,7 @@ define([
     }
 
     function getParam(name, def) {
-        var val = urlParams[name];
+        var val = urlParams[name.toLowerCase()];
         return val === undefined ? def : val;
     }
 
@@ -96,7 +97,7 @@ define([
             },
             match;
         while ((match = regex.exec(search)) !== null) {
-            urlParams[decode(match[1])] = decode(match[2]);
+            urlParams[decode(match[1]).toLowerCase()] = decode(match[2]);
         }
     }
 

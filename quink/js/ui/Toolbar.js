@@ -8,19 +8,23 @@
 define([
     'Underscore',
     'jquery',
-    'rangy',
+    'rangy-core',
+    'ui/PopupMenu',
+    'ui/StyleMenuProvider',
     'ui/ToolbarProvider',
+    'util/Draggable',
     'util/Event',
     'util/FastTap',
-    'util/Draggable',
+    'util/Func',
     'util/PubSub',
     'util/Env',
     'util/ViewportRelative',
     'hithandler/HitHandler'
-], function (_, $, rangy, ToolbarProvider, Event, FastTap, Draggable, PubSub, Env, ViewportRelative, HitHandler) {
+], function (_, $, rangy, PopupMenu, StyleMenuProvider, ToolbarProvider, Draggable, Event, FastTap, Func, PubSub, Env, ViewportRelative, HitHandler) {
     'use strict';
 
-    var Toolbar = function () {
+    var Toolbar = function (stylesheetMgr) {
+        this.stylesheetMgr = stylesheetMgr;
         HitHandler.register(this, true);
         PubSub.subscribe('plugin.insert.names', this.onPluginNames.bind(this));
     };
@@ -35,6 +39,83 @@ define([
     Toolbar.prototype.KEY_COMMAND_MAP = {
         'navandselect': '[data-tag=nav_and_select]',
         'statusbar': '[data-tag=toggle_status_bar]',
+    };
+
+    /**
+     * If there's a selection it will replace any existing H property. If there's not a selection but
+     * there's something being deselected revert back to a paragraph style.
+     */
+    Toolbar.prototype.onHSelect = function (selected, deselected) {
+        if (selected) {
+            PubSub.publish('command.exec', 'style.formatblock.' + selected);
+        } else if (deselected) {
+            PubSub.publish('command.exec', 'style.formatblock.p');
+        }
+    };
+
+    Toolbar.prototype.getHState = function () {
+        return (rangy.getSelection().rangeCount && [document.queryCommandValue('formatblock')]) || [];
+    };
+
+    Toolbar.prototype.createHDefs = function () {
+        return [{
+            label: 'H1',
+            value: 'h1',
+        }, {
+            label: 'H2',
+            value: 'h2'
+        }, {
+            label: 'H3',
+            value: 'h3'
+        }, {
+            label: 'H4',
+            value: 'h4'
+        }, {
+            label: 'H5',
+            value: 'h5'
+        }, {
+            label: 'H6',
+            value: 'h6'
+        }, {
+            label: 'cancel',
+            value: 'close'
+        }];
+    };
+
+    /**
+     * Style names will be of the form: qk_font_<foo>_and_more_stuff. It's the and_more_stuff that is wanted
+     * with any underscores changed into spaces.
+     */
+    Toolbar.prototype.fontLabel = function (style) {
+        return style.split('_').slice(3).join(' ');
+    };
+
+    /**
+     * Select all class level rules that contain 'mixon' in ther name.
+     */
+    Toolbar.prototype.effectsStyleRuleFilter = function (rule) {
+        return /^\..*(mixin)/i.test(rule.selectorText);
+    };
+
+    /**
+     * Select all rules that contain 'color' and are at class level.
+     */
+    Toolbar.prototype.colourStyleRuleFilter = function (rule) {
+        return /^\..*(color)/i.test(rule.cssText);
+    };
+
+    /**
+     * Select all rules that contain 'font-size' and are at class level.
+     */
+    Toolbar.prototype.fontStyleRuleFilter = function (rule) {
+        return /^\..*(font-family)/i.test(rule.cssText);
+    };
+
+    /**
+     * Select all rules that contain 'font-size' and are at class level.
+     */
+    Toolbar.prototype.sizeStyleRuleFilter = function (rule) {
+        return /^\..*(font-size)/i.test(rule.cssText);
     };
 
     Toolbar.prototype.hideCurrentDialog = function () {
@@ -61,13 +142,18 @@ define([
     Toolbar.prototype.getValidLinkUrl = function (userUrl) {
         var url = userUrl.trim(),
             scheme, validUrl, index;
-        if (url && url.indexOf(':') > 0) {
-            index = url.indexOf(this.LINK_URL_PREFIX);
-            if (index < 0 || url.length > this.LINK_URL_PREFIX.length) {
-                scheme = url.split(':')[0];
-                if (this.LINK_URL_SCHEME_BLACKLIST.indexOf(scheme.toLowerCase()) < 0) {
-                    validUrl = url;
+        if (url) {
+            if (url.indexOf(':') > 0) {
+                index = url.indexOf(this.LINK_URL_PREFIX);
+                if (index < 0 || url.length > this.LINK_URL_PREFIX.length) {
+                    scheme = url.split(':')[0];
+                    if (this.LINK_URL_SCHEME_BLACKLIST.indexOf(scheme.toLowerCase()) < 0) {
+                        validUrl = url;
+                    }
                 }
+            } else {
+                // No scheme, assume it's a valid relative url
+                validUrl = url;
             }
         }
         return validUrl;
@@ -143,10 +229,7 @@ define([
 
     Toolbar.prototype.showInsertMenu = function (event) {
         var hit = Event.isTouch ? event.changedTouches[0] : event;
-        this.insertMenu.css({
-            'top': hit.pageY,
-            'left': hit.pageX
-        }).appendTo('body').removeClass('qk_hidden');
+        this.insertMenu.show(hit.pageX, hit.pageY);
     };
 
     Toolbar.prototype.openPluginFromToolbar = function (event, pluginId) {
@@ -154,23 +237,62 @@ define([
     };
 
     /**
+     * argsStr is a comma separated string. The number of substrings depends on the caller. The low level
+     * showMenu needs up to 4 args whereas the higher level showStyleMenu only needs up to 2.
+     * createMenuFunc creates and returns the popup menu if necessary.
+     */
+    Toolbar.prototype.doShowMenu = function (event, argsStr, createMenuFunc) {
+        var button = $(event.target).closest('.qk_button'),
+            hit = Event.isTouch ? event.changedTouches[0] : event,
+            menu = button.data('menu'),
+            args;
+        if (!menu) {
+            if (argsStr) {
+                args = _.map(argsStr.split(','), function (name) {
+                    return name.trim();
+                });
+                menu = createMenuFunc.apply(this, args);
+                button.data('menu', menu);
+            } else {
+                throw new Error('Invalid menu definition');
+            }
+        }
+        menu.show(hit.pageX, hit.pageY);
+    };
+
+    /*
+     * argsStr contains a comma separated string with the substrings that split into the arguments to the
+     * anonymous function. Only the first argument is required with a further 2 being optional.
+     */
+    Toolbar.prototype.showStyleMenu = function (event, argsStr) {
+        this.doShowMenu(event, argsStr, function (defsFuncName, arg2, arg3) {
+            var isMultiSelectStr, labelFuncName;
+            if (/^(true|false)$/i.test(arg2)) {
+                isMultiSelectStr = arg2;
+            } else {
+                labelFuncName = arg2;
+                isMultiSelectStr = arg3;
+            }
+            return StyleMenuProvider.create(defsFuncName, labelFuncName, /^true$/i.test(isMultiSelectStr), this);
+        });
+    };
+
+    /*
+     * argsStr contains a comma separated string with the substrings that split into the arguments to the
+     * anonymous function.
+     */
+    Toolbar.prototype.showMenu = function (event, argsStr) {
+        this.doShowMenu(event, argsStr, function (defsFuncName, stateFuncName, onSelectFuncName, isMultiSelectStr) {
+            var def = Func.exec(this, defsFuncName);
+            return PopupMenu.create(def, Func.getBound(this, onSelectFuncName), Func.getBound(this, stateFuncName), /^true$/i.test(isMultiSelectStr));
+        }.bind(this));
+    };
+
+    /**
      * For commands that are going to use the browser's execCommand.
      */
     Toolbar.prototype.execCommand = function (event, msg) {
         PubSub.publish('command.exec', msg);
-    };
-
-    /**
-     * Execute a function. Id is the function name and args is an array of arguments the
-     * first of which is the event object.
-     */
-    Toolbar.prototype.execFunc = function (id, args) {
-        var func = this[id];
-        if (typeof func === 'function') {
-            func.apply(this, args);
-        } else {
-            console.log('no function: ' + id);
-        }
     };
 
     /**
@@ -184,7 +306,7 @@ define([
             cmd = el.attr('data-cmd'),
             cmdArgs = el.attr('data-cmd-args');
         if (cmd) {
-            this.execFunc(cmd.trim(), [event, cmdArgs]);
+            Func.exec(this, cmd.trim(), event, cmdArgs);
         } else {
             console.log('no data-cmd attribute');
         }
@@ -214,15 +336,15 @@ define([
         this.lastCommandState = state;
         this.toolbar.find('[data-cmd=execCommand]').each(function () {
             var btn = $(this),
-                cmdAr = btn.attr('data-cmd-args').split(' '),
-                cmd = cmdAr[0],
+                cmdAr = btn.attr('data-cmd-args').split('.'),
+                cmd = cmdAr[1],
                 st = state[cmd],
                 func, args;
             if (st !== undefined) {
                 if (typeof st === 'boolean') {
                     func = st ? btn.addClass : btn.removeClass;
                 } else {
-                    args = cmdAr[1];
+                    args = cmdAr[2];
                     func = args === st ? btn.addClass : btn.removeClass;
                 }
                 func.call(btn, 'qk_button_active');
@@ -246,7 +368,11 @@ define([
         });
     };
 
-    Toolbar.prototype.hideToolbar = function () {
+    Toolbar.prototype.hideToolbar = function (event) {
+        if (event) {
+            // Don't focus the toolbar
+            event.preventDefault();
+        }
         this.hideCurrentDialog();
         this.toolbar.addClass('qk_hidden');
         this.isVisible = false;
@@ -271,7 +397,7 @@ define([
     Toolbar.prototype.addToolbarTabListeners = function () {
         var toolbar = this;
         $('.qk_toolbar_tab_button').each(function () {
-            FastTap.fastTapNoFocus(this, toolbar.cmdHandler.bind(toolbar));
+            FastTap.fastTap(this, toolbar.cmdHandler, toolbar);
         });
     };
 
@@ -279,7 +405,7 @@ define([
         var hit, handled;
         if (event.hitType === 'double') {
             hit = Event.isTouch ? event.event.originalEvent.changedTouches[0] : event.event;
-            this.showToolbarAt(hit.pageX, hit.pageY);
+            this.showToolbar(0, $(document).scrollTop());
             this.vpToolbar.adjust();
             handled = true;
         }
@@ -290,25 +416,26 @@ define([
      * Plugins is an array of objects each of which contains a plugin id and a plugin name. Sort
      * the objects so that the menu is shown in ascending alphabetical order. 
      */
-    Toolbar.prototype.createInsertMenu = function (menu, plugins) {
+    Toolbar.prototype.createInsertMenu = function (plugins) {
+        var menuDefs = [];
         _.sortBy(plugins, function (def) {
             return def.name.toLowerCase();
         }).reverse().forEach(function (plugin) {
-            $('<div>').addClass('qk_popup_menu_item')
-                .attr('data-plugin-id', plugin.id)
-                .html(plugin.name)
-                .prependTo(menu);
+            menuDefs.push({
+                label: plugin.name,
+                value: plugin.id
+            });
         });
-        menu.on(Event.eventName('start'), function (event) {
-            // Prevents tapping on the menu from moving focus off the editable.
-            event.preventDefault();
-        });
-        menu.on(Event.eventName('end'), function (event) {
-            var id = $(event.target).attr('data-plugin-id');
-            if (id) {
-                PubSub.publish('command.exec', 'insert.' + id);
+        if (menuDefs.length) {
+            menuDefs.push({
+                value: 'close',
+                label: 'Cancel'
+            });
+        }
+        this.insertMenu = PopupMenu.create(menuDefs, function (selected) {
+            if (selected) {
+                PubSub.publish('command.exec', 'insert.' + selected);
             }
-            menu.addClass('qk_hidden').detach();
         });
     };
 
@@ -333,15 +460,14 @@ define([
      * Add plugins to the toolbar or the plugin (insert) menu as appropriate. If there are no
      * plugins added to the menu, don't display the plugin menu icon on the toolbar.
      */
-    Toolbar.prototype.processPluginData = function (pluginData, menu) {
+    Toolbar.prototype.processPluginData = function (pluginData) {
         var toolbarPlugins = _.filter(pluginData, function (item) {
                 return !!item.onToolbar;
             }),
             menuPlugins = _.difference(pluginData, toolbarPlugins);
         this.addPluginsToToolbar(toolbarPlugins);
         if (menuPlugins.length > 0) {
-            this.createInsertMenu(menu, menuPlugins);
-            this.toolbar.find('#qk_button_plugin_menu').removeClass('qk_hidden');
+            this.createInsertMenu(menuPlugins);
         } else {
             this.toolbar.find('#qk_button_plugin_menu').addClass('qk_hidden');
         }
@@ -349,8 +475,8 @@ define([
 
     Toolbar.prototype.onPluginNames = function (pluginData) {
         this.pluginNames = pluginData;
-        if (this.insertMenu) {
-            this.processPluginData(pluginData, this.insertMenu);
+        if (this.toolbar) {
+            this.processPluginData(pluginData);
         }
     };
 
@@ -360,7 +486,9 @@ define([
         func.call(submitBtn, 'qk_hidden');
     };
 
-    Toolbar.prototype.showToolbarAt = function (x, y) {
+    Toolbar.prototype.showToolbar = function (xcoord, ycoord) {
+        var x = xcoord === undefined ? 0 : xcoord,
+            y = ycoord === undefined ? 0 : ycoord;
         if (!this.vpToolbar) {
             this.vpToolbar = ViewportRelative.create(this.toolbar, {
                 top: y
@@ -381,14 +509,6 @@ define([
         this.isVisible = true;
     };
 
-    Toolbar.prototype.showToolbar = function () {
-        var y = $(window).innerHeight() / 5,
-            x;
-        this.toolbar.removeClass('qk_hidden');
-        x = Math.floor(($(document).innerWidth() - this.toolbar.width()) / 2);
-        this.showToolbarAt(x, y, true);
-    };
-
     Toolbar.prototype.initSubscriptions = function () {
         if (this.onCommandStateSub === undefined) {
             this.onCommandStateSub = PubSub.subscribe('command.state', this.onCommandState.bind(this));
@@ -407,36 +527,32 @@ define([
         }
     };
 
-    Toolbar.prototype.onDownloadInsertMenu = function (data) {
-        this.insertMenu = $(data);
-        if (this.pluginNames) {
-            this.processPluginData(this.pluginNames, this.insertMenu);
-        }
-    };
-
-    Toolbar.prototype.processToolbar = function (html, insertMenuHtml) {
+    Toolbar.prototype.processToolbar = function (html) {
         this.toolbar = $(html).appendTo('body');
         this.afterToolbarCreated();
-        this.onDownloadInsertMenu(insertMenuHtml);
+        if (this.pluginNames) {
+            this.processPluginData(this.pluginNames);
+        }
         this.onCommandState(this.lastCommandState);
     };
 
     /**
      * The insert menu download can't be processed until the toolbar download has been handled.
      */
-    Toolbar.prototype.onDownload = function (tbDef, tbTpl, imHtml) {
+    Toolbar.prototype.onDownload = function (tbDef, tbTpl, stylesTpl) {
         var html;
-        this.insertMenuHtml = imHtml[0];
+        this.stylesTpl = stylesTpl[0];
         this.toolbarProvider = new ToolbarProvider(tbTpl[0], tbDef[0]);
         html = this.toolbarProvider.createToolbar(QUINK.toolbar || {});
         this.willInitToolbar = true;
-        this.processToolbar(html, this.insertMenuHtml);
+        this.processToolbar(html);
     };
 
     Toolbar.prototype.downloadResources = function () {
-        var downloads = $.when($.get(Env.resource('toolbarDef.json')),
-                            $.get(Env.resource('toolbarTpl.tpl')),
-                            $.get(Env.resource('insertmenu.html')));
+        var toolbarDefUrl = Env.getParam('toolbardef', Env.resource('toolbarDef.json')),
+            downloads = $.when($.get(toolbarDefUrl),
+                $.get(Env.resource('toolbarTpl.tpl')),
+                $.get(Env.resource('styleTpl.tpl')));
         downloads.done(this.onDownload.bind(this));
         downloads.fail(function () {
             console.log('toolbar download failed...');
@@ -444,7 +560,7 @@ define([
         return downloads;
     };
 
-    Toolbar.prototype.configureToolbar = function (def) {
+    Toolbar.prototype.configureToolbar = function (def, settings) {
         var provider = this.toolbarProvider,
             lastDef = provider.getToolbarDefinition(),
             html;
@@ -453,16 +569,17 @@ define([
             this.toolbar = null;
         }
         this.willInitToolbar = true;
-        html = provider.createToolbar(def);
-        this.processToolbar(html, this.insertMenuHtml);
+        html = provider.createToolbar(def, settings);
+        this.processToolbar(html);
         return lastDef;
     };
 
     var toolbar;
 
-    function init() {
-        toolbar = new Toolbar();
+    function init(stylesheetMgr) {
+        toolbar = new Toolbar(stylesheetMgr);
         QUINK.configureToolbar = toolbar.configureToolbar.bind(toolbar);
+        QUINK.showToolbar = toolbar.showToolbar.bind(toolbar);
         return toolbar.downloadResources();
     }
 
