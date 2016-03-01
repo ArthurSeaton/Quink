@@ -1,0 +1,27 @@
+/* override bootstrap for the input element*/
+.has-error input {
+    background-color: #f2dede;
+}
+/* give enough space to actually key three number on phone size */
+input.quink-reduced-padding {
+    padding-right: 8px;
+    padding-left: 8px;
+}
+/* prevents the grey square thumbnail from squashing up on phone size */
+#image-preview {
+    min-width: 200px;
+    min-height: 200px;
+
+}
+input.numeric, select {
+    min-width: 60px;
+    max-width: 70px;
+}
+.image-dialog-contents {
+    padding-top: 15px;
+    padding-bottom: 15px;
+}
+.image-uploader {
+    padding-top: 15px;
+    padding-bottom: 15px;
+}

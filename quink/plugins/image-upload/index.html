@@ -5,46 +5,55 @@
     <meta http-equiv="Content-type" content="text/html;charset=UTF-8"/>
     <meta http-equiv="X-UA-Compatible" content="chrome=1"/>
     <link rel="icon" type="image/png" href="images/logo.png"/>
-    <link rel="stylesheet" href="css/bootstrap.min.css" type="text/css"/>
-    <link rel="stylesheet" href="css/jasny-bootstrap.min.css" type="text/css"/>
+    <link rel="stylesheet" href="css/bootstrap.custom.min.css" type="text/css"/>
+    <link rel="stylesheet" href="css/jasny-bootstrap.css" type="text/css"/>
+    <link rel="stylesheet" href="css/font-awesome.min.css"/>
+    <link rel="stylesheet" href="css/image-upload.css" type="text/css"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
     <meta name="apple-mobile-web-app-capable" content="yes"/>
     <title>Image Upload</title>
 </head>
 <body>
-<div class="container">
-    <div class="col-xs-6 col-sm-6 col-md-4 col-lg-3">
-        <div id="image-uploader">
-            <div class="fileinput fileinput-new col-xs-12" data-provides="fileinput">
-                <div class="fileinput-new thumbnail" data-trigger="fileinput">
-                    <img data-src="holder.js/200x200/gray/text:(no image)" alt="(no image)">
+<div class="image-dialog-contents">
+    <form id="alt-text-form">
+        <div id="alt-text-inputs" class="col-xs-11">
+            <div class="form-group">
+                <div class="col-xs-12">
+                    <label for="alt-text-input">Image description (alt text)</label>
                 </div>
-                <div class="fileinput-preview fileinput-exists thumbnail"></div>
-                <span class="btn btn-default btn-file">
-                    <span class="fileinput-new">Select image</span>
-                    <span class="fileinput-exists">Change</span><input type="file" name="...">
-                </span>
-                <a href="#" class="btn btn-default fileinput-exists" data-dismiss="fileinput">Remove</a>
+                <div class="col-xs-12">
+                    <input type="text" id="alt-text-input" class="form-control quink-reduced-padding" value="">
+                </div>
             </div>
         </div>
-    </div>
+    </form>
     <form id="size-inputs-form">
-        <div id="size-inputs" class="col-xs-12 col-md-4 col-lg-3">
+        <div id="size-inputs" class="col-xs-5">
             <div class="form-group">
-                <div class="col-xs-12 col-lg-6">
+                <div class="col-xs-12">
                     <label for="height-input-group">Height</label>
                 </div>
                 <div id="height-input-group">
-                    <div class="col-xs-3 col-md-7">
-                        <input type="text" id="height-input" class="form-control">
+                    <div class="col-xs-5">
+                        <input type="text" id="height-input" class="form-control quink-reduced-padding numeric"
+                               value="30">
                     </div>
-                    <div class="col-xs-3 col-sm-2 col-md-5">
+                    <div class="col-xs-4">
                         <!-- options from w3c http://www.w3.org/Style/Examples/007/units.en.html-->
-                        <select id="height-unit-select" class="form-control">
+                        <select id="height-unit-select" class="form-control" value="%">
+                            <option>%</option>
+                            <option>mm</option>
+                            <option>cm</option>
+                            <option>in</option>
+                            <option>pt</option>
+                            <option>pc</option>
                             <option>px</option>
                             <option>em</option>
-                            <option>%</option>
+                            <option>ex</option>
                         </select>
+                    </div>
+                    <div class="col-xs-2">
+                        <button id="aspect-ratio-lock-button" type="button" class="btn btn-default fa fa-lock"/>
                     </div>
                 </div>
             </div>
@@ -53,31 +62,91 @@
                     <label for="width-input-group">Width</label>
                 </div>
                 <div id="width-input-group">
-
-                    <div class="col-xs-3 col-md-7">
-                        <input type="text" class="form-control" id="width-input">
+                    <div class="col-xs-5">
+                        <input type="text" class="form-control quink-reduced-padding numeric" id="width-input"
+                               value="30">
                     </div>
-                    <div class="col-xs-3 col-sm-2 col-md-5">
+                    <div class="col-xs-4">
                         <select id="width-unit-select" class="form-control">
+                            <option>%</option>
+                            <option>mm</option>
+                            <option>cm</option>
+                            <option>in</option>
+                            <option>pt</option>
+                            <option>pc</option>
                             <option>px</option>
                             <option>em</option>
+                            <option>ex</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-xs-12">
+                    <label for="border-input-group">Border</label>
+                </div>
+                <div id="border-input-group">
+                    <div class="col-xs-5">
+                        <input type="text" class="form-control quink-reduced-padding numeric" id="border-input"
+                               value="">
+                    </div>
+                    <div class="col-xs-4">
+                        <select id="border-unit-select" class="form-control">
                             <option>%</option>
+                            <option>mm</option>
+                            <option>cm</option>
+                            <option>in</option>
+                            <option>pt</option>
+                            <option>pc</option>
+                            <option selected>px</option>
+                            <option>em</option>
+                            <option>ex</option>
                         </select>
                     </div>
                 </div>
             </div>
         </div>
     </form>
+    <div class="col-xs-7">
+        <div id="image-uploader" class="image-uploader">
+            <div class="fileinput fileinput-new" data-provides="fileinput">
+                <!-- xs-12 to stop button going up RHS -->
+                <div class="fileinput-new thumbnail col-xs-12" data-trigger="fileinput">
+                    <img data-src="holder.js/250x250/gray/text:(no image)" alt="(no image)">
+                </div>
+                <div class="fileinput-preview fileinput-exists thumbnail" id="image-preview"></div>
+                <!-- HTML5 media capture specification ensures that the "file"-type input will cause photo or video capture to be offered on iOS 6.0+ and Android OS 3.0+ devices -->
+                <span class="btn btn-default btn-file">
+                    <span class="fileinput-new">Upload...</span>
+                    <span class="fileinput-exists">Upload...</span><input type="file" name="...">
+                </span>
+                <a href="#" class="btn btn-default fileinput-exists" data-dismiss="fileinput">Delete</a>
+            </div>
+            <div class="input-group">
+                <div class="input-group-btn">
+                    <button id="download-button" type="button" class="btn btn-default" tabindex="-1">Download</button>
+                </div>
+                <input id="download-url-input" type="text" class="form-control" placeholder="URL">
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Placed at the end of the document so the pages load faster -->
-<script type="text/javascript" src="lib/jquery.js"></script>
-<script src="lib/bootstrap.min.js"></script>
+<script type="text/javascript" src="lib/jquery-2.1.2-custom.min.js"></script>
 <!-- Image/File upload plugin -->
-<script src="lib/jasny-bootstrap.min.js"></script>
-<script src="lib/holder.js"></script>
-<script type="text/javascript" src="image-upload.js"></script>
-
+<script type="text/javascript" src="lib/jasny-bootstrap.js"></script>
+<script type="text/javascript" src="lib/holder.js"></script>
+<!-- exif library to detect image orientation from camera -->
+<script type="text/javascript" src="lib/binaryajax.js"></script>
+<script type="text/javascript" src="lib/exif.js"></script>
+<script type="text/javascript" src="image-uploader.js"></script>
+<script>
+    $(document).ready(function () {
+        console.log('[' + new Date().toISOString() + ']' + 'imageUpload iframe posting ready');
+        window.postMessage("imageUploadReady", "*");
+    });
+</script>
 </body>
 </html>
 
