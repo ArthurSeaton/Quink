@@ -13,7 +13,7 @@
  * need any value.
  * If this is an AMD load then assume that the quink sources will be loaded by the AMD app and only load the
  * stylesheet and set up the environment. To indicate this scenario set 'data-amdload' as an attribute in the
- * script tag.
+ * script tag. An AMD load is a load of Quink from another AMD app.
  */
 (function (global) {
     'use strict';
