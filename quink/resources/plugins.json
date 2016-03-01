@@ -45,17 +45,34 @@
         "80": {
             "container": {
                 "element": "div",
-                "class": "imageuploader",
-                "alt-data-tags": ["data-image-uploading"],
-                "alt-classes": ["image-uploading"]
+                "class": "uploaded-image"
             },
-            "url": "image-upload/ImageUploadAdapter.js",
+            "url": "image-upload/image-upload-adapter.js",
             "name": "Image Upload",
             "topic-prefix": "plugin.image-upload",
             "insert-key": "i",
             "on-toolbar":  true,
             "icon": "image-upload/logo.png",
 
+            "ui": {
+                "menu": {
+                    "lateral": "left",
+                    "vertical": "top"
+                }
+            }
+        },
+        "68": {
+            "container": {
+                "element": "div",
+                "class": "deviantart-muro",
+                "alt-classes": ["uploaded-image"]
+            },
+            "url": "deviantart-muro/deviantart-muro-adapter.js",
+            "name": "deviantart-muro",
+            "topic-prefix": "plugin.deviantart-muro",
+            "insert-key": "d",
+            "on-toolbar": true,
+            "icon": "deviantart-muro/logo.png",
             "ui": {
                 "menu": {
                     "lateral": "left",

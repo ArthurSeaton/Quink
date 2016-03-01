@@ -1,0 +1,19 @@
+.qk_image_upload_frame {
+    position: fixed;
+    top: 5%;
+    left: 5%;
+    border-style: none;
+    border-width: 1px;
+    border-radius: 0px 0px 5px 5px;
+    padding: 2px;
+    z-index: 250;
+    width: 90%;
+    max-width: 600px;
+    height: 90%;
+    max-height: 600px;
+    -webkit-box-shadow: 3px 3px 4px #555;
+    box-shadow: 3px 3px 4px #555;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+}
