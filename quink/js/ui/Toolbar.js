@@ -186,7 +186,7 @@ define([
     };
 
     /**
-     * Cancel the link creation. The range passed in was the one current when the create link 
+     * Cancel the link creation. The range passed in was the one current when the create link
      * dialog was shown and is the one that is restored.
      */
     Toolbar.prototype.onCancelLink = function (range) {
@@ -414,7 +414,7 @@ define([
 
     /**
      * Plugins is an array of objects each of which contains a plugin id and a plugin name. Sort
-     * the objects so that the menu is shown in ascending alphabetical order. 
+     * the objects so that the menu is shown in ascending alphabetical order.
      */
     Toolbar.prototype.createInsertMenu = function (plugins) {
         var menuDefs = [];
@@ -447,10 +447,10 @@ define([
                 var iconUrl = 'url(' + Env.pluginAdapter(plugin.icon) + ')',
                     span = $('<span>').addClass('qk_button_bg').css('background-image', iconUrl),
                     btn = $('<button>').addClass('qk_button')
-                            .attr('data-cmd', 'openPluginFromToolbar')
-                            .attr('data-cmd-args', plugin.id)
-                            .append(span)
-                            .insertBefore(pluginMenuBtn);
+                    .attr('data-cmd', 'openPluginFromToolbar')
+                    .attr('data-cmd-args', plugin.id)
+                    .append(span)
+                    .insertBefore(pluginMenuBtn);
                 FastTap.fastTap(btn[0], toolbar.cmdHandler, toolbar, true);
             });
         }
@@ -522,7 +522,7 @@ define([
         this.initSubscriptions();
         Draggable.create('.qk_toolbar_container');
         PubSub.publish('ui.toolbar.created');
-        if ((this.isVisible === undefined && Env.getParam('toolbar', 'off') === 'on') || this.isVisible) {
+        if ((this.isVisible === undefined && Env.getParam('toolbar', 'on') === 'on') || this.isVisible) {
             this.showToolbar();
         }
     };

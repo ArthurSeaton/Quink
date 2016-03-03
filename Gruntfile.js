@@ -28,6 +28,7 @@ module.exports = function (grunt) {
                         'readonly.html',
                         'index.html',
                         'quink.html',
+                        'quink/js/lib/require.js',
                         'quink/plugins/**',
                         'quink/resources/**',
                         '!quink/resources/css/**',
@@ -68,14 +69,15 @@ module.exports = function (grunt) {
                     baseUrl: 'quink/js',
                     mainConfigFile: 'quink/js/main.js',
                     name: 'main',
-                    include: ['lib/almond', 'ext/PluginAdapterContext'],
+                    include: ['ext/PluginAdapterContext'],
                     stubModules: ['text'],
+                    // insertRequire: ['main'],
                     preserveLicenseComments: false,
                     out: 'prebuilt/quink/js/main.js',
-                    wrap: {
-                        'startFile': 'build/wrap-start.js',
-                        'endFile': 'build/wrap-end.js'
-                    },
+                    // wrap: {
+                    //     'startFile': 'build/wrap-start.js',
+                    //     'endFile': 'build/wrap-end.js'
+                    // },
                     optimize: 'none'
                 }
             }
